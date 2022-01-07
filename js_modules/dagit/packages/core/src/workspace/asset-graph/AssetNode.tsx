@@ -238,6 +238,7 @@ export const ASSET_NODE_FRAGMENT = gql`
     id
     opName
     description
+    partitionDefinition
     assetKey {
       path
     }

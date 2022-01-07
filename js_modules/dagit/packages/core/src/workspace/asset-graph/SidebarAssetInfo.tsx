@@ -2,12 +2,14 @@ import React from 'react';
 
 import {displayNameForAssetKey} from '../../app/Util';
 import {AssetMaterializations} from '../../assets/AssetMaterializations';
+import {PartitionHealthSummary} from '../../assets/PartitionHealthSummary';
 import {Description} from '../../pipelines/Description';
 import {SidebarSection, SidebarTitle} from '../../pipelines/SidebarComponents';
 import {GraphExplorerSolidHandleFragment_solid_definition} from '../../pipelines/types/GraphExplorerSolidHandleFragment';
 import {pluginForMetadata} from '../../plugins';
 import {Box} from '../../ui/Box';
 import {ColorsWIP} from '../../ui/Colors';
+import {HighlightedCodeBlock} from '../../ui/HighlightedCodeBlock';
 import {RepoAddress} from '../types';
 
 import {LiveDataForNode} from './Utils';
@@ -40,11 +42,25 @@ export const SidebarAssetInfo: React.FC<{
         )}
       </SidebarSection>
 
+      {node.partitionDefinition && (
+        <SidebarSection title="Partitions">
+          <Box padding={{vertical: 16, horizontal: 24}} flex={{direction: 'column', gap: 16}}>
+            <HighlightedCodeBlock
+              style={{display: 'flex', flexWrap: 'wrap', fontSize: '0.9rem'}}
+              language="py"
+              value={node.partitionDefinition}
+            />
+            <PartitionHealthSummary assetKey={node.assetKey} />
+          </Box>
+        </SidebarSection>
+      )}
+
       <div style={{borderBottom: `2px solid ${ColorsWIP.Gray300}`}} />
 
       <AssetMaterializations
         assetKey={node.assetKey}
         assetLastMaterializedAt={lastMaterialization?.materializationEvent.timestamp}
+        assetHasDefinedPartitions={!!node.partitionDefinition}
         asSidebarSection
         liveData={liveData}
         paramsTimeWindowOnly={false}

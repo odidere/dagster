@@ -65,27 +65,27 @@ export const AssetView: React.FC<Props> = ({assetKey}) => {
     ? buildRepoAddress(definition.repository.name, definition.repository.location.name)
     : null;
 
-  const bonusResult = useQuery<AssetNodeDefinitionRunsQuery, AssetNodeDefinitionRunsQueryVariables>(
-    ASSET_NODE_DEFINITION_RUNS_QUERY,
-    {
-      skip: !repoAddress,
-      variables: {
-        repositorySelector: {
-          repositoryLocationName: repoAddress ? repoAddress.location : '',
-          repositoryName: repoAddress ? repoAddress.name : '',
-        },
+  const inProgressRunsQuery = useQuery<
+    AssetNodeDefinitionRunsQuery,
+    AssetNodeDefinitionRunsQueryVariables
+  >(ASSET_NODE_DEFINITION_RUNS_QUERY, {
+    skip: !repoAddress,
+    variables: {
+      repositorySelector: {
+        repositoryLocationName: repoAddress ? repoAddress.location : '',
+        repositoryName: repoAddress ? repoAddress.name : '',
       },
-      notifyOnNetworkStatusChange: true,
-      pollInterval: 5 * 1000,
     },
-  );
+    notifyOnNetworkStatusChange: true,
+    pollInterval: 5 * 1000,
+  });
 
   let liveDataByNode: LiveData = {};
 
   if (definition) {
     const inProgressRuns =
-      bonusResult.data?.repositoryOrError.__typename === 'Repository'
-        ? bonusResult.data.repositoryOrError.inProgressRunsByStep
+      inProgressRunsQuery.data?.repositoryOrError.__typename === 'Repository'
+        ? inProgressRunsQuery.data.repositoryOrError.inProgressRunsByStep
         : [];
 
     const nodesWithLatestMaterialization = [
@@ -151,6 +151,7 @@ export const AssetView: React.FC<Props> = ({assetKey}) => {
       <AssetMaterializations
         assetKey={assetKey}
         assetLastMaterializedAt={lastMaterializedAt}
+        assetHasDefinedPartitions={!!definition?.partitionDefinition}
         params={params}
         paramsTimeWindowOnly={navigatedDirectlyToTime}
         setParams={setParams}
@@ -177,6 +178,7 @@ const ASSET_QUERY = gql`
 
         definition {
           id
+          partitionDefinition
           repository {
             id
             name

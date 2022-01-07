@@ -6,6 +6,8 @@ import 'highlight.js/styles/xcode.css';
 // @ts-ignore
 import hljs from 'highlight.js/lib/core';
 // @ts-ignore
+import py from 'highlight.js/lib/languages/python';
+// @ts-ignore
 import sql from 'highlight.js/lib/languages/sql';
 // @ts-ignore
 import yaml from 'highlight.js/lib/languages/yaml';
@@ -15,10 +17,11 @@ const {configure, highlightBlock} = hljs;
 
 hljs.registerLanguage('sql', sql);
 hljs.registerLanguage('yaml', yaml);
+hljs.registerLanguage('py', py);
 
 interface Props {
   value: string;
-  language: 'yaml' | 'sql';
+  language: 'yaml' | 'sql' | 'py';
   className?: string;
   style?: React.CSSProperties;
 }
