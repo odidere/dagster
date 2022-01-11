@@ -32,7 +32,7 @@ export function usePartitionHealthData(assetKey: AssetKey) {
         ? data.assetNodeOrError.partitionKeys
         : [];
 
-    const latestByKey = keyBy(latest, (l) => l.partition);
+    const latestByKey = keyBy(latest.filter(Boolean), (l) => l.partition);
     const spans = assembleIntoSpans(keys, (key) => key in latestByKey);
 
     return {

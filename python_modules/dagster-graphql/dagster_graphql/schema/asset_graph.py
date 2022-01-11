@@ -56,7 +56,7 @@ class GrapheneAssetNode(graphene.ObjectType):
     partitionKeys = non_null_list(graphene.String)
     partitionDefinition = graphene.String()
     latestMaterializationByPartition = graphene.Field(
-        non_null_list(GrapheneAssetMaterialization),
+        graphene.List(GrapheneAssetMaterialization),
         partitions=graphene.List(graphene.String),
     )
 
@@ -223,7 +223,8 @@ class GrapheneAssetNode(graphene.ObjectType):
         ]
 
         return [
-            GrapheneAssetMaterialization(event=event) for event in ordered_materializations if event
+            GrapheneAssetMaterialization(event=event) if event else None
+            for event in ordered_materializations
         ]
 
 
