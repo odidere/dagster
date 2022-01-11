@@ -57,8 +57,9 @@ export const AssetView: React.FC<Props> = ({assetKey}) => {
 
   const {assetOrError} = queryResult.data || queryResult.previousData || {};
   const asset = assetOrError && assetOrError.__typename === 'Asset' ? assetOrError : null;
-  const definition = asset?.definition;
   const lastMaterializedAt = asset?.assetMaterializations[0]?.materializationEvent.timestamp;
+  const definition = asset?.definition;
+
   const repoAddress = definition
     ? buildRepoAddress(definition.repository.name, definition.repository.location.name)
     : null;
@@ -97,6 +98,10 @@ export const AssetView: React.FC<Props> = ({assetKey}) => {
       inProgressRuns,
     );
   }
+
+  // Avoid thrashing the materializations UI (which chooses a different default query based on whether
+  // data is partitioned) by waiting for the definition to be loaded. (null OR a valid definition)
+  const isDefinitionLoaded = definition !== undefined;
 
   return (
     <div>
@@ -146,15 +151,17 @@ export const AssetView: React.FC<Props> = ({assetKey}) => {
           />
         ) : undefined}
       </div>
-      <AssetMaterializations
-        assetKey={assetKey}
-        assetLastMaterializedAt={lastMaterializedAt}
-        assetHasDefinedPartitions={!!definition?.partitionDefinition}
-        params={params}
-        paramsTimeWindowOnly={!!params.asOf}
-        setParams={setParams}
-        liveData={definition ? liveDataByNode[definition.id] : undefined}
-      />
+      {isDefinitionLoaded && (
+        <AssetMaterializations
+          assetKey={assetKey}
+          assetLastMaterializedAt={lastMaterializedAt}
+          assetHasDefinedPartitions={!!definition?.partitionDefinition}
+          params={params}
+          paramsTimeWindowOnly={!!params.asOf}
+          setParams={setParams}
+          liveData={definition ? liveDataByNode[definition.id] : undefined}
+        />
+      )}
     </div>
   );
 };
