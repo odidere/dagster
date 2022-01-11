@@ -61,6 +61,7 @@ function useRecentMaterializations(
   xAxis: 'partition' | 'time',
   before?: string,
 ) {
+  console.log(assetHasDefinedPartitions, xAxis);
   const loadUsingPartitionKeys = assetHasDefinedPartitions && xAxis === 'partition';
 
   const {data, loading, refetch} = useQuery<
@@ -80,15 +81,17 @@ function useRecentMaterializations(
         },
   });
 
-  const asset = data?.assetOrError.__typename === 'Asset' ? data?.assetOrError : null;
-  const materializations = React.useMemo(() => asset?.assetMaterializations || [], [asset]);
-  const allPartitionKeys = asset?.definition?.partitionKeys;
-  const requestedPartitionKeys =
-    loadUsingPartitionKeys && allPartitionKeys
-      ? allPartitionKeys.slice(allPartitionKeys.length - 120)
-      : undefined;
+  return React.useMemo(() => {
+    const asset = data?.assetOrError.__typename === 'Asset' ? data?.assetOrError : null;
+    const materializations = asset?.assetMaterializations || [];
+    const allPartitionKeys = asset?.definition?.partitionKeys;
+    const requestedPartitionKeys =
+      loadUsingPartitionKeys && allPartitionKeys
+        ? allPartitionKeys.slice(allPartitionKeys.length - 120)
+        : undefined;
 
-  return {asset, requestedPartitionKeys, materializations, loading, refetch};
+    return {asset, requestedPartitionKeys, materializations, loading, refetch};
+  }, [data, loading, refetch, loadUsingPartitionKeys]);
 }
 
 export const AssetMaterializations: React.FC<Props> = ({
@@ -198,7 +201,9 @@ export const AssetMaterializations: React.FC<Props> = ({
         : params.partition
         ? b.partition === params.partition
         : false,
-    ) || grouped[0];
+    ) ||
+    grouped[0] ||
+    null;
 
   if (loading) {
     return (

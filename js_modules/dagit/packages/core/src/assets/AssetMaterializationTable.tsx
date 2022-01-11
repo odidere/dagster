@@ -57,7 +57,7 @@ export const AssetMaterializationTable: React.FC<{
   );
 };
 
-const NoneSpan = <span style={{color: ColorsWIP.Gray400}}>None</span>;
+const NoneSpan = () => <span style={{color: ColorsWIP.Gray400}}>None</span>;
 
 const AssetMaterializationRow: React.FC<{
   group: MaterializationGroup;
@@ -83,7 +83,7 @@ const AssetMaterializationRow: React.FC<{
   if (!latest) {
     return (
       <HoverableRow>
-        <td style={{whiteSpace: 'nowrap', paddingLeft: 24}}>{partition || NoneSpan}</td>
+        <td style={{whiteSpace: 'nowrap', paddingLeft: 24}}>{partition || <NoneSpan />}</td>
         <td colSpan={3} />
       </HoverableRow>
     );
@@ -102,7 +102,7 @@ const AssetMaterializationRow: React.FC<{
           <td style={{whiteSpace: 'nowrap', ...focusCss}}>
             <Group direction="row" spacing={2}>
               <DisclosureTriangle open={isFocused} />
-              {partition || NoneSpan}
+              {partition || <NoneSpan />}
             </Group>
           </td>
         )}
