@@ -28,8 +28,8 @@ export const AssetMaterializationTable: React.FC<{
   hasPartitions: boolean;
   hasLineage: boolean;
   groups: MaterializationGroup[];
-  focused?: string;
-  setFocused?: (timestamp: string) => void;
+  focused?: MaterializationGroup;
+  setFocused?: (timestamp: MaterializationGroup) => void;
 }> = ({hasPartitions, hasLineage, groups, focused, setFocused}) => {
   return (
     <Table>
@@ -63,11 +63,11 @@ const AssetMaterializationRow: React.FC<{
   group: MaterializationGroup;
   hasPartitions: boolean;
   hasLineage: boolean;
-  focused?: string;
-  setFocused?: (timestamp: string) => void;
+  focused?: MaterializationGroup;
+  setFocused?: (group: MaterializationGroup) => void;
 }> = ({group, hasPartitions, hasLineage, focused, setFocused}) => {
   const {latest, partition, timestamp, predecessors} = group;
-  const isFocused = focused === timestamp;
+  const isFocused = focused === group;
 
   const focusCss = isFocused
     ? {paddingLeft: 4, borderLeft: `4px solid ${ColorsWIP.HighlightGreen}`}
@@ -97,7 +97,7 @@ const AssetMaterializationRow: React.FC<{
 
   return (
     <>
-      <HoverableRow onClick={() => setFocused?.(timestamp)}>
+      <HoverableRow onClick={() => setFocused?.(group)}>
         {hasPartitions && (
           <td style={{whiteSpace: 'nowrap', ...focusCss}}>
             <Group direction="row" spacing={2}>

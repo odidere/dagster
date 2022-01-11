@@ -83,9 +83,10 @@ function useRecentMaterializations(
   const asset = data?.assetOrError.__typename === 'Asset' ? data?.assetOrError : null;
   const materializations = React.useMemo(() => asset?.assetMaterializations || [], [asset]);
   const allPartitionKeys = asset?.definition?.partitionKeys;
-  const requestedPartitionKeys = allPartitionKeys
-    ? allPartitionKeys.slice(allPartitionKeys.length - 120)
-    : undefined;
+  const requestedPartitionKeys =
+    loadUsingPartitionKeys && allPartitionKeys
+      ? allPartitionKeys.slice(allPartitionKeys.length - 120)
+      : undefined;
 
   return {asset, requestedPartitionKeys, materializations, loading, refetch};
 }
@@ -96,12 +97,19 @@ export const AssetMaterializations: React.FC<Props> = ({
   assetHasDefinedPartitions,
   asSidebarSection,
   params,
-  paramsTimeWindowOnly,
   setParams,
   liveData,
 }) => {
-  const before = paramsTimeWindowOnly && params.asOf ? `${Number(params.asOf) + 1}` : undefined;
-  const {xAxis = assetHasDefinedPartitions ? 'partition' : 'time', asOf} = params;
+  const before = params.asOf ? `${Number(params.asOf) + 1}` : undefined;
+  const xAxis =
+    params.partition !== undefined
+      ? 'partition'
+      : params.time !== undefined || before
+      ? 'time'
+      : assetHasDefinedPartitions
+      ? 'partition'
+      : 'time';
+
   const {requestedPartitionKeys, materializations, loading, refetch} = useRecentMaterializations(
     assetKey,
     assetHasDefinedPartitions,
@@ -110,11 +118,11 @@ export const AssetMaterializations: React.FC<Props> = ({
   );
 
   React.useEffect(() => {
-    if (paramsTimeWindowOnly) {
+    if (params.asOf) {
       return;
     }
     refetch();
-  }, [paramsTimeWindowOnly, assetLastMaterializedAt, refetch]);
+  }, [params.asOf, assetLastMaterializedAt, refetch]);
 
   const hasLineage = materializations.some((m) => m.materializationEvent.assetLineage.length > 0);
   const hasPartitions = materializations.some((m) => m.partition);
@@ -137,16 +145,16 @@ export const AssetMaterializations: React.FC<Props> = ({
     return <span />; // chartjs and our useViewport hook don't play nicely with jest
   }
 
-  if (loading) {
-    return (
-      <Box padding={{vertical: 20}}>
-        <Spinner purpose="section" />
-      </Box>
-    );
-  }
-
   if (asSidebarSection) {
     const latest = materializations[0];
+
+    if (loading) {
+      return (
+        <Box padding={{vertical: 20}}>
+          <Spinner purpose="section" />
+        </Box>
+      );
+    }
     return (
       <>
         <CurrentRunsBanner liveData={liveData} />
@@ -183,6 +191,38 @@ export const AssetMaterializations: React.FC<Props> = ({
     );
   }
 
+  const focused =
+    grouped.find((b) =>
+      params.time
+        ? Number(b.timestamp) <= Number(params.time)
+        : params.partition
+        ? b.partition === params.partition
+        : false,
+    ) || grouped[0];
+
+  if (loading) {
+    return (
+      <Box style={{display: 'flex'}}>
+        <Box style={{flex: 1}}>
+          <Box
+            flex={{justifyContent: 'space-between', alignItems: 'center'}}
+            padding={{vertical: 16, horizontal: 24}}
+            style={{marginBottom: -1}}
+          >
+            <Subheading>Materializations</Subheading>
+          </Box>
+          <Box padding={{vertical: 20}}>
+            <Spinner purpose="section" />
+          </Box>
+        </Box>
+        <Box
+          style={{width: '40%'}}
+          border={{side: 'left', color: ColorsWIP.KeylineGray, width: 1}}
+        ></Box>
+      </Box>
+    );
+  }
+
   return (
     <Box style={{display: 'flex'}}>
       <Box style={{flex: 1}}>
@@ -200,7 +240,13 @@ export const AssetMaterializations: React.FC<Props> = ({
                   {id: 'partition', label: 'By partition'},
                   {id: 'time', label: 'By timestamp'},
                 ]}
-                onClick={(id: string) => setParams({...params, xAxis: id as 'partition' | 'time'})}
+                onClick={(id: string) =>
+                  setParams(
+                    id === 'time'
+                      ? {...params, partition: undefined, time: focused.timestamp || ''}
+                      : {...params, partition: focused.partition || '', time: undefined},
+                  )
+                }
               />
             </div>
           ) : null}
@@ -211,15 +257,14 @@ export const AssetMaterializations: React.FC<Props> = ({
             hasPartitions={hasPartitions}
             hasLineage={hasLineage}
             groups={grouped}
-            focused={
-              (grouped.find((b) => Number(b.timestamp) <= Number(asOf)) || grouped[0])?.timestamp
-            }
-            setFocused={(asOf) =>
-              setParams({
-                ...params,
-                asOf: paramsTimeWindowOnly || asOf !== grouped[0]?.timestamp ? asOf : undefined,
-              })
-            }
+            focused={focused}
+            setFocused={(group) => {
+              const updates: Partial<AssetViewParams> =
+                xAxis === 'time'
+                  ? {time: group.timestamp !== params.time ? group.timestamp : undefined}
+                  : {partition: group.partition !== params.partition ? group.partition : undefined};
+              setParams({...params, ...updates});
+            }}
           />
         ) : (
           <Box

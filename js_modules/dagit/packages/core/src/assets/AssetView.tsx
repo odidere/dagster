@@ -36,7 +36,8 @@ interface Props {
 }
 
 export interface AssetViewParams {
-  xAxis?: 'partition' | 'time';
+  partition?: string;
+  time?: string;
   asOf?: string;
 }
 
@@ -44,9 +45,6 @@ export const AssetView: React.FC<Props> = ({assetKey}) => {
   useDocumentTitle(`Asset: ${displayNameForAssetKey(assetKey)}`);
 
   const [params, setParams] = useQueryPersistedState<AssetViewParams>({});
-  const [navigatedDirectlyToTime, setNavigatedDirectlyToTime] = React.useState(() =>
-    Boolean(params.asOf),
-  );
 
   const queryResult = useQuery<AssetQuery, AssetQueryVariables>(ASSET_QUERY, {
     variables: {assetKey: {path: assetKey.path}},
@@ -129,14 +127,14 @@ export const AssetView: React.FC<Props> = ({assetKey}) => {
           >
             <Spinner purpose="section" />
           </Box>
-        ) : navigatedDirectlyToTime ? (
+        ) : params.asOf ? (
           <Box
             padding={{vertical: 16, horizontal: 24}}
             border={{side: 'bottom', width: 1, color: ColorsWIP.KeylineGray}}
           >
             <HistoricalViewAlert
               asOf={params.asOf}
-              onClick={() => setNavigatedDirectlyToTime(false)}
+              onClick={() => setParams({asOf: undefined, time: params.asOf})}
               hasDefinition={!!definition}
             />
           </Box>
@@ -153,7 +151,7 @@ export const AssetView: React.FC<Props> = ({assetKey}) => {
         assetLastMaterializedAt={lastMaterializedAt}
         assetHasDefinedPartitions={!!definition?.partitionDefinition}
         params={params}
-        paramsTimeWindowOnly={navigatedDirectlyToTime}
+        paramsTimeWindowOnly={!!params.asOf}
         setParams={setParams}
         liveData={definition ? liveDataByNode[definition.id] : undefined}
       />
