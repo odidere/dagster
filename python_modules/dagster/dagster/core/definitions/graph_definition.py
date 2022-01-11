@@ -623,6 +623,10 @@ class GraphDefinition(NodeDefinition):
             raise_on_error=raise_on_error,
         )
 
+    @property
+    def parent_graph_def(self) -> Optional["GraphDefinition"]:
+        return None
+
 
 class SubselectedGraphDefinition(GraphDefinition):
     def __init__(
@@ -645,6 +649,15 @@ class SubselectedGraphDefinition(GraphDefinition):
             config=parent_graph_def.config_mapping,
             tags=parent_graph_def.tags,
         )
+
+    @property
+    def parent_graph_def(self) -> GraphDefinition:
+        return self._parent_graph_def
+
+    def get_top_level_ignored_nodes(self) -> List[Node]:
+        return [
+            solid for solid in self.parent_graph_def.solids if not self.has_solid_named(solid.name)
+        ]
 
 
 def _validate_in_mappings(
